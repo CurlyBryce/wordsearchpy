@@ -5,4 +5,6 @@ A simple script I made to solve a crossword puzzle
 Python 3.8+
 
 **Usage**  
+```md
 wordsearch.py v w <word-to-find>
+```
