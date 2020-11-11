@@ -1,10 +1,7 @@
-## Wordsearch.py
-A simple script I made to solve a crossword puzzle
+# wordsearchpy
+A python script to find sets of characters in an array of characters.
 
-**Requirements**  
-Python 3.8+
-
-**Usage**  
-```md
-wordsearch.py v w <word-to-find>
-```
+## TODO
+- parse options
+- find starters
+- look in directions
