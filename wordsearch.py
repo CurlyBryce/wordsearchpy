@@ -7,7 +7,7 @@ verbose_level = 0
 
 # Test Variables
 class test:
-    size = "13x11"
+    size = "11x13"
     string = "ysjzdesdikdzjlrcanuxddnyqaqwvadxrnakhlpdxyaenalassbanunytlrvaxeangdkeieomdqvpmmtbzzdagqkieeriatlhkjmtdlxtwioaitiahliiswmbpanamaahcsaleuzenevmco"
     lines = ["ysjzdesdikdzj","lrcanuxddnyqa","qwvadxrnakhlp","dxyaenalassba","nunytlrvaxean","gdkeieomdqvpm","mtbzzdagqkiee","riatlhkjmtdlx","twioaitiahlii","swmbpanamaahc","saleuzenevmco"]
     wordlist = ["bahamas","chile","japan","maldives","guyane","haiti","mexico","moldova","pananma"]
@@ -101,11 +101,12 @@ def create_array(size, string):
 
   array = []
 
-  for col in range(cols):
+  for row in range(rows):
     array.append([])
-    for row in range(rows):
-      position = (row - 0 + (col + (cols * col) - 0))
-      array[col].append(string[position])
+    for col in range(cols):
+      position = ((row * cols) + col)
+      print(position)
+      array[row].append(string[position])
 
   return array
 
@@ -119,10 +120,10 @@ def print_array(array, remove=[[-1,-1]], prefix="\t"):
       # check for removal
       for x in remove:
         if (x[0] == rowpos and x[1] == colpos):
-          rem = " "
+          rem = "  "
           break
         else:
-          rem = col
+          rem = col + " "
 
       print(rem, end="")
 
