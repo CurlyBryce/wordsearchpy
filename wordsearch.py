@@ -105,7 +105,7 @@ def create_array(size, string):
     array.append([])
     for col in range(cols):
       position = ((row * cols) + col)
-      print(position)
+      verbose(4, position)
       array[row].append(string[position])
 
   return array
