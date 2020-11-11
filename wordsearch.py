@@ -6,6 +6,7 @@ version = "2.0"
 verbose_level = 0
 limit_directions = False
 reverse_remove = False
+collect = []
 
 # Test Variables
 class test:
@@ -106,8 +107,8 @@ def error(var):
 
 # Create Array
 def create_array(size, string):
-  verbose(2, "Creating Array")
-  verbose(2, str("\tsize: " + size + "\n\tstring: " + string))
+  verbose(1, "Creating Array")
+  verbose(1, str("\tsize: " + size + "\n\tstring: " + string))
 
   rows, cols = size.split("x")
   verbose(3, str(rows + " by " + cols))
@@ -160,17 +161,25 @@ def print_array(array, remove=[[-1,-1]], prefix="\t"):
 
 # Search
 def search(word, array):
-  verbose(2, "Starting Search")
+  verbose(1, "Starting Search")
   verbose(2, str("\tword: " + word + "\n\tarray: "))
   global verbose_level
   if (verbose_level >= 2):
     print_array(array)
 
-  # Find starters
-  starters = find_starters(array, word)
+  words = word.split(",")
 
-  # Init direction
-  direction(starters, word, array)
+  for word in words:
+    # Find starters
+    starters = find_starters(array, word)
+
+    # Init direction
+    direction(starters, word, array)
+
+  global collect
+  verbose(3, collect)
+  print_array(array, collect, "")
+
   return
 
 # Find starters
@@ -221,9 +230,7 @@ def direction(starters, word, array):
   for coords in starters:
     found = direction_iter(array, cols, rows, directions, word, 0, [coords])
 
-  print("Not Found")
-  sys.exit()
-
+  return
 
 def direction_iter(array, cols, rows, directions, word, offset=0, found=[]):
   for x in directions:
@@ -265,8 +272,11 @@ def direction_iter(array, cols, rows, directions, word, offset=0, found=[]):
     if (char == word[offset]):
       found.append([row, col])
       if (offset + 1 == len(word)): # Found word
-        print_array(array,found,"")
-        sys.exit()
+        global collect
+        for x in found:
+          collect.append(x)
+
+        break
       else:
         offset += 1
         direction_iter(array, cols, rows, next_direction, word, offset, found)
