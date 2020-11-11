@@ -7,7 +7,7 @@ verbose_level = 0
 
 # Test Variables
 class test:
-    size = "11x13"
+    size = "13x11"
     string = "ysjzdesdikdzjlrcanuxddnyqaqwvadxrnakhlpdxyaenalassbanunytlrvaxeangdkeieomdqvpmmtbzzdagqkieeriatlhkjmtdlxtwioaitiahliiswmbpanamaahcsaleuzenevmco"
     lines = ["ysjzdesdikdzj","lrcanuxddnyqa","qwvadxrnakhlp","dxyaenalassba","nunytlrvaxean","gdkeieomdqvpm","mtbzzdagqkiee","riatlhkjmtdlx","twioaitiahlii","swmbpanamaahc","saleuzenevmco"]
     wordlist = ["bahamas","chile","japan","maldives","guyane","haiti","mexico","moldova","pananma"]
@@ -53,8 +53,15 @@ def parse_commands():
       continue
 
     if (x == "search" or x == "s"):
-      search()
-      return
+      try:
+        index = options.index("search")
+      except:
+        index = options.index("s")
+      finally:
+        #array = create_array(options[index+2], options[index+3]) # search(size, string)
+        array = create_array(test.size, test.string)
+        search(options[index+1], array) # search(word, array)
+        return
 
     if (x == "help" or x == "h"):
       try:
@@ -72,10 +79,10 @@ def parse_commands():
       error(x)
 
 # Verbose
-def verbose(level, message):
+def verbose(level, message, end="\n"):
   global verbose_level
   if (verbose_level >= level):
-    print(message)
+    print(message, end=end)
   return
 
 # Error
@@ -83,10 +90,91 @@ def error(var):
   print('"' + str(var) + '"' + " unknown")
   sys.exit()
 
-# Search
-def search():
-  print("search not available")
+# Create Array
+def create_array(size, string):
+  verbose(2, "Creating Array")
+  verbose(2, str("\tsize: " + size + "\n\tstring: " + string))
+
+  rows, cols = size.split("x")
+  verbose(3, str(rows + " by " + cols))
+  rows, cols = int(rows), int(cols)
+
+  array = []
+
+  for col in range(cols):
+    array.append([])
+    for row in range(rows):
+      position = (row - 0 + (col + (cols * col) - 0))
+      array[col].append(string[position])
+
+  return array
+
+# Print Array
+def print_array(array, remove=[[-1,-1]], prefix="\t"):
+  rowpos, colpos = 0, 0
+  for row in array:
+    print(prefix, end="")
+
+    for col in row:
+      # check for removal
+      for x in remove:
+        if (x[0] == rowpos and x[1] == colpos):
+          rem = " "
+          break
+        else:
+          rem = col
+
+      print(rem, end="")
+
+      colpos += 1
+
+    print("\n", end="")
+    rowpos += 1
+    colpos = 0
+
   return
+
+# Search
+def search(word, array):
+  verbose(2, "Starting Search")
+  verbose(2, str("\tword: " + word + "\n\tarray: "))
+  global verbose_level
+  if (verbose_level >= 2):
+    print_array(array)
+
+  # Find starters
+  starters = find_starters(array, word)
+  return
+
+# Find starters
+def find_starters(array, word):
+  verbose(2, "Finding starters")
+  word_start = word[0]
+
+  verbose(2, "\t", end="")
+
+  starters = []
+  rowpos, colpos = 0, 0
+  for row in array:
+    for col in row:
+      if (col == word_start):
+        starters.append([rowpos, colpos])
+        verbose(2, str(str(rowpos) + "x" + str(colpos) + " "), end="")
+
+      colpos += 1
+    rowpos += 1
+    colpos = 0
+
+  verbose(2, "")
+
+  if (starters == []):
+    starters = [[-1,-1]]
+
+  global verbose_level
+  if (verbose_level >= 3):
+    print_array(array, starters)
+
+  return starters
 
 # Manual/help pages
 def manual(page="main"):
