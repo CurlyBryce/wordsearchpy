@@ -2,14 +2,15 @@
 import sys
 
 # Global Variables
-version = "a2.0"
+version = "2.0"
 verbose_level = 0
+limit_directions = False
+reverse_remove = False
 
 # Test Variables
 class test:
     size = "11x13"
     string = "ysjzdesdikdzjlrcanuxddnyqaqwvadxrnakhlpdxyaenalassbanunytlrvaxeangdkeieomdqvpmmtbzzdagqkieeriatlhkjmtdlxtwioaitiahliiswmbpanamaahcsaleuzenevmco"
-    lines = ["ysjzdesdikdzj","lrcanuxddnyqa","qwvadxrnakhlp","dxyaenalassba","nunytlrvaxean","gdkeieomdqvpm","mtbzzdagqkiee","riatlhkjmtdlx","twioaitiahlii","swmbpanamaahc","saleuzenevmco"]
     wordlist = ["bahamas","chile","japan","maldives","guyane","haiti","mexico","moldova","pananma"]
 
 # Parse flags
@@ -19,6 +20,16 @@ def parse_flags():
   # For every flag
   for x in flags:
     if (x[0] != "-"): # Check if it is a flag
+      continue
+
+    if (x == "-l"):
+      global limit_directions
+      limit_directions = True
+      continue
+
+    if (x == "-r"):
+      global reverse_remove
+      reverse_remove = True
       continue
 
     if (x[0:2] == "-v"):
@@ -58,10 +69,13 @@ def parse_commands():
       except:
         index = options.index("s")
       finally:
-        #array = create_array(options[index+2], options[index+3]) # search(size, string)
-        array = create_array(test.size, test.string)
-        search(options[index+1], array) # search(word, array)
-        return
+        try:
+          array = create_array(options[index+2], options[index+3]) # search(size, string)
+        except:
+          array = create_array(test.size, test.string)
+        finally:
+          search(options[index+1], array) # search(word, array)
+          return
 
     if (x == "help" or x == "h"):
       try:
@@ -113,6 +127,8 @@ def create_array(size, string):
 # Print Array
 def print_array(array, remove=[[-1,-1]], prefix="\t"):
   rowpos, colpos = 0, 0
+  global reverse_remove
+
   for row in array:
     print(prefix, end="")
 
@@ -120,10 +136,17 @@ def print_array(array, remove=[[-1,-1]], prefix="\t"):
       # check for removal
       for x in remove:
         if (x[0] == rowpos and x[1] == colpos):
-          rem = "  "
+          if (reverse_remove == True):
+            rem = col + " "
+          else:
+            rem = ". "
           break
+
         else:
-          rem = col + " "
+          if (reverse_remove == False):
+            rem = col + " "
+          else:
+            rem = ". "
 
       print(rem, end="")
 
@@ -145,6 +168,9 @@ def search(word, array):
 
   # Find starters
   starters = find_starters(array, word)
+
+  # Init direction
+  direction(starters, word, array)
   return
 
 # Find starters
@@ -160,7 +186,7 @@ def find_starters(array, word):
     for col in row:
       if (col == word_start):
         starters.append([rowpos, colpos])
-        verbose(2, str(str(rowpos) + "x" + str(colpos) + " "), end="")
+        verbose(2, str(str(rowpos) + "," + str(colpos) + " "), end="")
 
       colpos += 1
     rowpos += 1
@@ -176,6 +202,79 @@ def find_starters(array, word):
     print_array(array, starters)
 
   return starters
+
+# Direction
+def direction(starters, word, array):
+  verbose(2, str("Started looking in directions from starters"))
+
+  # Get array size
+  rows = len(array)
+  cols = len(array[0])
+
+  global limit_directions
+  if (limit_directions == True):
+    directions = ["d","r","dr","ur","u"]
+  else:
+    directions = ["d","r","dr","ur","u","ul","l","dl"]
+
+  word = word[1:(len(word) + 1)]
+  for coords in starters:
+    found = direction_iter(array, cols, rows, directions, word, 0, [coords])
+
+  print("Not Found")
+  sys.exit()
+
+
+def direction_iter(array, cols, rows, directions, word, offset=0, found=[]):
+  for x in directions:
+    next_direction = [x]
+    if (x == "d"):
+      row = found[-1][0] + 1
+      col = found[-1][1]
+    elif (x == "r"):
+      row = found[-1][0]
+      col = found[-1][1] + 1
+    elif (x == "dr"):
+      row = found[-1][0] + 1
+      col = found[-1][1] + 1
+    elif (x == "dl" and limit_directions == False):
+      row = found[-1][0] + 1
+      col = found[-1][1] - 1
+    elif (x == "u" and limit_directions == False):
+      row = found[-1][0] - 1
+      col = found[-1][1]
+    elif (x == "ur" and limit_directions == False):
+      row = found[-1][0] - 1
+      col = found[-1][1] + 1
+    elif (x == "ul" and limit_directions == False):
+      row = found[-1][0] - 1
+      col = found[-1][1] - 1
+    elif (x == "l" and limit_directions == False):
+      row = found[-1][0]
+      col = found[-1][1] - 1
+    else:
+      continue
+
+    try:
+      char = array[row][col]
+    except:
+      continue
+
+    verbose(5, f'{char}: {offset}: {next_direction}: {found}')
+
+    if (char == word[offset]):
+      found.append([row, col])
+      if (offset + 1 == len(word)): # Found word
+        print_array(array,found,"")
+        sys.exit()
+      else:
+        offset += 1
+        direction_iter(array, cols, rows, next_direction, word, offset, found)
+
+    else:
+      offset = 0
+      found = [found[0]]
+      continue
 
 # Manual/help pages
 def manual(page="main"):
