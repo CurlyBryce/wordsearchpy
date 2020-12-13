@@ -126,9 +126,13 @@ def create_array(size, string):
   return array
 
 # Print Array
-def print_array(array, remove=[[-1,-1]], prefix="\t"):
+def print_array(array, remove=[], prefix="\t"):
   rowpos, colpos = 0, 0
   global reverse_remove
+
+  # Don't crash is no matches are found'
+  if (remove == []):
+    remove = [[-1,-1]]
 
   for row in array:
     print(prefix, end="")
