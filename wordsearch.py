@@ -1,182 +1,306 @@
-#Imports
-import sys, time
+# Imports
+import sys
 
-#Classes
-class dict:
-    colordict = {"c":"0","r":"31","g":"32","y":"33","b":"34","m":"35","c":"36","w":"37"}
-    matrix = []
-    matches = []
-    helpdict = {
-        "main":"CLI List:\n  [h]elp <page>: display help page\n  [v]erbose: enable verbose logging",
-    }
+# Global Variables
+version = "2.0"
+verbose_level = 0
+limit_directions = False
+reverse_remove = False
+collect = []
 
-#Global Variables
-v = 0
-word = ""
-
-#Test Vars
+# Test Variables
 class test:
-    lines = ["ysjzdesdikdzj","lrcanuxddnyqa","qwvadxrnakhlp","dxyaenalassba","nunytlrvaxean","gdkeieomdqvpm","mtbzzdagqkiee","riatlhkjmtdlx","twioaitiahlii","swmbpanamaahc","saleuzenevmco"]
-    findlist = ["bahamas","chile","japan","maldives","guyane","haiti","mexico","moldova","pananma"]
+    size = "11x13"
+    string = "ysjzdesdikdzjlrcanuxddnyqaqwvadxrnakhlpdxyaenalassbanunytlrvaxeangdkeieomdqvpmmtbzzdagqkieeriatlhkjmtdlxtwioaitiahliiswmbpanamaahcsaleuzenevmco"
+    wordlist = ["bahamas","chile","japan","maldives","guyane","haiti","mexico","moldova","pananma"]
 
-#Functions
-def count(x,c=0):
-    for y in x:
-        c += 1
-    return c
+# Parse flags
+def parse_flags():
+  flags = sys.argv
 
-def listhelp(x="main"):
-    if (x in dict.helpdict):
-        print(dict.helpdict[x])
+  # For every flag
+  for x in flags:
+    if (x[0] != "-"): # Check if it is a flag
+      continue
+
+    if (x == "-l"):
+      global limit_directions
+      limit_directions = True
+      continue
+
+    if (x == "-r"):
+      global reverse_remove
+      reverse_remove = True
+      continue
+
+    if (x[0:2] == "-v"):
+      if (len(x) <= 3):
+        global verbose_level
+        try:
+          verbose_level = int(x[-1])
+        except:
+          verbose_level = 1
+
+        verbose(1, str("verbose level " + str(verbose_level)))
+        continue
+      else:
+        error(x)
+
+    if (x == "--"):
+      return
+
     else:
-        print('Unknown help page')
-    quit()
-    return
+      error(x)
 
-def color(x,y):
-    if (x in dict.colordict):
-        return f'\033[{dict.colordict[x]}m{y}\033[0m'
+# Parse Commands
+def parse_commands():
+  verbose(2, "Parsing Commands")
+
+  options = sys.argv
+  options.pop(0)
+
+  # For every command
+  for x in options:
+    if (x[0] == "-"): # Do nothing for flags
+      continue
+
+    if (x == "search" or x == "s"):
+      try:
+        index = options.index("search")
+      except:
+        index = options.index("s")
+      finally:
+        try:
+          array = create_array(options[index+2], options[index+3]) # search(size, string)
+        except:
+          array = create_array(test.size, test.string)
+        finally:
+          search(options[index+1], array) # search(word, array)
+          return
+
+    if (x == "help" or x == "h"):
+      try:
+        helpindex = options.index("help")
+      except:
+        helpindex = options.index("h")
+      finally:
+        try:
+          helpindex += 1
+          manual(options[helpindex])
+        except:
+          manual()
+
     else:
-        return f'color not found: {x}'
+      error(x)
 
-def verbose(x=0,y="\n"):
-    if (v > 0):
-        print(x,end=y,flush=True)
-    return
+# Verbose
+def verbose(level, message, end="\n"):
+  global verbose_level
+  if (verbose_level >= level):
+    print(message, end=end)
+  return
 
-def clitest():
-    if ((arglen := len(sys.argv)) > 1):
-        for x in range(1,arglen):
-            y = sys.argv[x]
-            if (y in ["h","help"]):
-                try:
-                    listhelp(sys.argv[x + 1])
-                except:
-                    listhelp()
-            elif (y in ["v","verbose"]):
-                global v
-                v = 1
-            elif (y in ["w","word"]):
-                global word
-                verbose(sys.argv[x + 1])
-                word = str(sys.argv[x + 1])
-                return
-            else:
-                print(f'Unrecognised argument: {y}')
-                listhelp()
-    return
+# Error
+def error(var):
+  print('"' + str(var) + '"' + " unknown")
+  sys.exit()
 
-def linestomatrixdict(x):
-    c,r = len(test.lines),count(test.lines[0])
-    verbose(color("g",f'Grid is a {c}x{r}'))
+# Create Array
+def create_array(size, string):
+  verbose(1, "Creating Array")
+  verbose(1, str("\tsize: " + size + "\n\tstring: " + string))
 
-    verbose(color("g",f'Lines to be converted are:'))
-    for x in test.lines:
-        verbose(f'\t|{x}|')
-    
-    verbose(color("c","\nStarting conversion"))
+  rows, cols = size.split("x")
+  verbose(3, str(rows + " by " + cols))
+  rows, cols = int(rows), int(cols)
 
-    for x in test.lines:
-        verbose("\t|","")
-        tmplist = []
-        for y in x:
-            tmplist.append(y)
-            verbose(y,"")
-        dict.matrix.append(tmplist)
-        verbose("|")
-    
-    verbose(color("c","\nConversion Completed"))
-    return
+  array = []
 
-def printmatrix(x,f):
-    rcoord = 0
-    col = 0
-    for r in dict.matrix:
-        ccoord = 0
-        verbose("\t|","")
-        for c in r:
-            for y in x:
-                if ([rcoord,ccoord] == y):
-                    col = 1
-                    break
-                else:
-                    col = 0
-            if col == 1:
-                verbose(color(f,f'{c}'.upper()),"")
-            else:
-                verbose(f'{c}'.upper(),"")
-            ccoord += 1
-        verbose("|")
-        rcoord += 1
+  for row in range(rows):
+    array.append([])
+    for col in range(cols):
+      position = ((row * cols) + col)
+      verbose(4, position)
+      array[row].append(string[position])
 
-def lookaround(tmp,x):
-    rx = range(-1,2)
-    i = tmp[-1]
+  return array
 
-    for y in rx:
-        for z in rx:
-            try:
-                coord = [abs((z + i[0])),abs((y + i[1]))]
-            finally:
-                try:
-                    if ((dict.matrix[coord[0]][coord[1]]) == (x)):
-                        tmp.append(coord)
-                except:
-                    continue
-    dict.matches.append(tmp)
-    return tmp
+# Print Array
+def print_array(array, remove=[[-1,-1]], prefix="\t"):
+  rowpos, colpos = 0, 0
+  global reverse_remove
 
-def findword(x):
-    verbose(color("m","\nStarting Search"))
+  for row in array:
+    print(prefix, end="")
 
-    tmplist = []
-    iterr = 0
-    tmp = []
+    for col in row:
+      # check for removal
+      for x in remove:
+        if (x[0] == rowpos and x[1] == colpos):
+          if (reverse_remove == True):
+            rem = col + " "
+          else:
+            rem = ". "
+          break
 
-    for y in x:
-        tmplist.append(y)
-    verbose(f'\tword is: {x}\n\t{tmplist}\n')
+        else:
+          if (reverse_remove == False):
+            rem = col + " "
+          else:
+            rem = ". "
 
-    for c in dict.matrix:
-        iterc = 0
-        for b in c:
-            if (tmplist[0] == b):
-                tmp = [[iterr,iterc]]
-                verbose(f'\tFound "{b}" on {tmp[0]}')
-                for x in tmplist:
-                    if (not lookaround(tmp,x)):
-                        break
-                        
-                printmatrix(tmp,"c")
-            iterc += 1
-        iterr += 1
+      print(rem, end="")
 
-    c = 0
-    copy = []
-    for x in dict.matches:
-        var = len(x)
-        if var > c:
-            c = var
-            copy = x
-            continue
-    verbose(color("g",'\n\nLikely Result'))
-    printmatrix(copy,"g")
-    
+      colpos += 1
 
+    print("\n", end="")
+    rowpos += 1
+    colpos = 0
 
+  return
+
+# Search
+def search(word, array):
+  verbose(1, "Starting Search")
+  verbose(2, str("\tword: " + word + "\n\tarray: "))
+  global verbose_level
+  if (verbose_level >= 2):
+    print_array(array)
+
+  words = word.split(",")
+
+  for word in words:
+    # Find starters
+    starters = find_starters(array, word)
+
+    # Init direction
+    direction(starters, word, array)
+
+  global collect
+  verbose(3, collect)
+  print_array(array, collect, "")
+
+  return
+
+# Find starters
+def find_starters(array, word):
+  verbose(2, "Finding starters")
+  word_start = word[0]
+
+  verbose(2, "\t", end="")
+
+  starters = []
+  rowpos, colpos = 0, 0
+  for row in array:
+    for col in row:
+      if (col == word_start):
+        starters.append([rowpos, colpos])
+        verbose(2, str(str(rowpos) + "," + str(colpos) + " "), end="")
+
+      colpos += 1
+    rowpos += 1
+    colpos = 0
+
+  verbose(2, "")
+
+  if (starters == []):
+    starters = [[-1,-1]]
+
+  global verbose_level
+  if (verbose_level >= 3):
+    print_array(array, starters)
+
+  return starters
+
+# Direction
+def direction(starters, word, array):
+  verbose(2, str("Started looking in directions from starters"))
+
+  # Get array size
+  rows = len(array)
+  cols = len(array[0])
+
+  global limit_directions
+  if (limit_directions == True):
+    directions = ["d","r","dr","ur","u"]
+  else:
+    directions = ["d","r","dr","ur","u","ul","l","dl"]
+
+  word = word[1:(len(word) + 1)]
+  for coords in starters:
+    found = direction_iter(array, cols, rows, directions, word, 0, [coords])
+
+  return
+
+def direction_iter(array, cols, rows, directions, word, offset=0, found=[]):
+  for x in directions:
+    next_direction = [x]
+    if (x == "d"):
+      row = found[-1][0] + 1
+      col = found[-1][1]
+    elif (x == "r"):
+      row = found[-1][0]
+      col = found[-1][1] + 1
+    elif (x == "dr"):
+      row = found[-1][0] + 1
+      col = found[-1][1] + 1
+    elif (x == "dl" and limit_directions == False):
+      row = found[-1][0] + 1
+      col = found[-1][1] - 1
+    elif (x == "u" and limit_directions == False):
+      row = found[-1][0] - 1
+      col = found[-1][1]
+    elif (x == "ur" and limit_directions == False):
+      row = found[-1][0] - 1
+      col = found[-1][1] + 1
+    elif (x == "ul" and limit_directions == False):
+      row = found[-1][0] - 1
+      col = found[-1][1] - 1
+    elif (x == "l" and limit_directions == False):
+      row = found[-1][0]
+      col = found[-1][1] - 1
+    else:
+      continue
+
+    try:
+      char = array[row][col]
+    except:
+      continue
+
+    verbose(5, f'{char}: {offset}: {next_direction}: {found}')
+
+    if (char == word[offset]):
+      found.append([row, col])
+      if (offset + 1 == len(word)): # Found word
+        global collect
+        for x in found:
+          collect.append(x)
+
+        break
+      else:
+        offset += 1
+        direction_iter(array, cols, rows, next_direction, word, offset, found)
+
+    else:
+      offset = 0
+      found = [found[0]]
+      continue
+
+# Manual/help pages
+def manual(page="main"):
+  if (page == "main"):
+    print("wordsearchpy [flags] [--] <command> [options]")
+  else:
+    print('"' + str(page) + '"' + " not implemented")
+  return
+
+# Main
 def main():
-    #Pre Main
-    clitest()
-    #Start Main
-    verbose(color("r","Start Main\n"))
+  # Parse flags and options
+  parse_flags()
+  parse_commands()
+  return
 
-    linestomatrixdict(test.lines)
-
-    findword(word)
-
-    #End Main
-    verbose(color("r","\nEnd Main"))
-    return
-
+# Run main if running as script/executable
 if __name__ == "__main__":
     main()
